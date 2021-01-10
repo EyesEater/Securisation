@@ -1,0 +1,9 @@
+## Setting up Keycloak server
+Allez dans le répertoire keycloak-containers-demo et tapez la commande:
+sudo docker run --name demo-keycloak -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -p 8080:8080 --net demo-network demo-keycloak
+
+sudo docker start demo-keycloak
+
+## Setting up NodeJS server
+Allez dans le répertoire Moodle et tapez la commande:
+nodemon index.js

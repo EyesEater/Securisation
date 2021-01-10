@@ -1,0 +1,14 @@
+{
+  "realm": "ProjetRealm",
+  "auth-server-url": "http://localhost:8080/auth/",
+  "ssl-required": "external",
+  "resource": "moodle",
+  "verify-token-audience": true,
+  "credentials": {
+    "secret": "900432c8-58c9-4d6c-9bfa-a57102526c1e"
+  },
+  "confidential-port": 0,
+  "policy-enforcer": {
+    "on-deny-redirect-to": "/home"
+  }
+}
