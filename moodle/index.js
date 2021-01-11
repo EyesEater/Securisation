@@ -43,10 +43,9 @@ const keycloak = new Keycloak({
 
 app.use(keycloak.middleware({
     logout: '/logout',
-    admin: '/',
+    admin: '/'
 }));
 
-app.get('/', (req, res) => res.redirect('/home'));
 
 const parseToken = raw => {
     if (!raw || typeof raw !== 'string') return null;
@@ -62,7 +61,7 @@ const parseToken = raw => {
     }
 };
 
-app.get('/home', keycloak.protect(), (req, res, next) => {
+app.get('/', keycloak.protect(), (req, res, next) => {
     const details = parseToken(req.session['keycloak-token']);
     const embedded_params = {};
 
@@ -78,13 +77,13 @@ app.get('/home', keycloak.protect(), (req, res, next) => {
 });
 
 app.get('/login', keycloak.protect(), (req, res) => {
-    return res.redirect('home');
+    return res.redirect('/');
 });
 
 app.get('/lecture/ue1', keycloak.enforcer(['Read asset:L1'], {
     resource_server_id: 'moodle'
 }), (req, res) => {
-    db.query("SELECT * FROM note WHERE ue = 1;", (err, result) => {
+    db.query("SELECT * FROM note WHERE ue = 1 AND valide = true;", (err, result) => {
     	if (err) return res.status(500).end('Error while reading database: ' + err);
     	
     	const details = parseToken(req.session['keycloak-token']);
@@ -106,7 +105,7 @@ app.get('/lecture/ue1', keycloak.enforcer(['Read asset:L1'], {
 app.get('/lecture/ue2', keycloak.enforcer(['Read asset:L2'], {
     resource_server_id: 'moodle'
 }), (req, res) => {
-    db.query("SELECT * FROM note WHERE ue = 2;", (err, result) => {
+    db.query("SELECT * FROM note WHERE ue = 2 AND valide = true;", (err, result) => {
     	if (err) return res.status(500).end('Error while reading database: ' + err);
     	
     	const details = parseToken(req.session['keycloak-token']);
@@ -128,7 +127,7 @@ app.get('/lecture/ue2', keycloak.enforcer(['Read asset:L2'], {
 app.get('/lecture/ue3', keycloak.enforcer(['Read asset:L3'], {
     resource_server_id: 'moodle'
 }), (req, res) => {
-    db.query("SELECT * FROM note WHERE ue = 3;", (err, result) => {
+    db.query("SELECT * FROM note WHERE ue = 3 AND valide = true;", (err, result) => {
     	if (err) return res.status(500).end('Error while reading database: ' + err);
     	
     	const details = parseToken(req.session['keycloak-token']);
@@ -247,7 +246,7 @@ app.get('/ecriture/ue3', keycloak.enforcer(['Write asset:E3'], {
 		res.render('ecriture', {
 		    user: embedded_params,
 		    notes: result,
-		    ue: "ue2"
+		    ue: "ue3"
 		});
     });
 });
@@ -273,19 +272,136 @@ app.post('/ecriture/ue3', keycloak.enforcer(['Write asset:E3'], {
 app.get('/valider/ue1', keycloak.enforcer(['Validate asset:V1'], {
     resource_server_id: 'moodle'
 }), (req, res) => {
-    return res.status(200).end('success');
+    db.query("SELECT * FROM note WHERE ue = 1;", (err, result) => {
+    	if (err) return res.status(500).end('Error while reading database: ' + err);
+    	
+    	const details = parseToken(req.session['keycloak-token']);
+		const embedded_params = {};
+
+		if (details) {
+		    embedded_params.name = details.name;
+		    embedded_params.email = details.email;
+		    embedded_params.username = details.preferred_username;
+		}
+    	
+		res.render('validation', {
+		    user: embedded_params,
+		    notes: result,
+		    ue: "ue1"
+		});
+    });
+});
+
+app.post('/valider/ue1', keycloak.enforcer(['Validate asset:V1'], {
+    resource_server_id: 'moodle'
+}), (req, res) => {
+    let idnote = req.body.idnote;
+    let validation;
+    if (req.body.validation == "valide") {
+    	validation = true;
+    } else {
+    	validation = false;
+    }
+    
+    if (idnote) {
+    	db.query("UPDATE note SET valide = ? WHERE idnote = ?;", [validation, idnote], (err, result) => {
+    		if (err) return res.status(500).end('Error while updating in database: ' + err);
+    		
+    		res.redirect('/valider/ue1');
+    	});
+    } else {
+    	return res.status(400).end("Wrong parameters");
+    }
 });
 
 app.get('/valider/ue2', keycloak.enforcer(['Validate asset:V2'], {
     resource_server_id: 'moodle'
 }), (req, res) => {
-    return res.status(200).end('success');
+    db.query("SELECT * FROM note WHERE ue = 2;", (err, result) => {
+    	if (err) return res.status(500).end('Error while reading database: ' + err);
+    	
+    	const details = parseToken(req.session['keycloak-token']);
+		const embedded_params = {};
+
+		if (details) {
+		    embedded_params.name = details.name;
+		    embedded_params.email = details.email;
+		    embedded_params.username = details.preferred_username;
+		}
+    	
+		res.render('validation', {
+		    user: embedded_params,
+		    notes: result,
+		    ue: "ue2"
+		});
+    });
+});
+
+app.post('/valider/ue2', keycloak.enforcer(['Validate asset:V2'], {
+    resource_server_id: 'moodle'
+}), (req, res) => {
+    let idnote = req.body.idnote;
+    let validation;
+    if (req.body.validation == "valide") {
+    	validation = true;
+    } else {
+    	validation = false;
+    }
+    
+    if (idnote) {
+    	db.query("UPDATE note SET valide = ? WHERE idnote = ?;", [validation, idnote], (err, result) => {
+    		if (err) return res.status(500).end('Error while updating in database: ' + err);
+    		
+    		res.redirect('/valider/ue2');
+    	});
+    } else {
+    	return res.status(400).end("Wrong parameters");
+    }
 });
 
 app.get('/valider/ue3', keycloak.enforcer(['Validate asset:V3'], {
     resource_server_id: 'moodle'
 }), (req, res) => {
-    return res.status(200).end('success');
+    db.query("SELECT * FROM note WHERE ue = 3;", (err, result) => {
+    	if (err) return res.status(500).end('Error while reading database: ' + err);
+    	
+    	const details = parseToken(req.session['keycloak-token']);
+		const embedded_params = {};
+
+		if (details) {
+		    embedded_params.name = details.name;
+		    embedded_params.email = details.email;
+		    embedded_params.username = details.preferred_username;
+		}
+    	
+		res.render('validation', {
+		    user: embedded_params,
+		    notes: result,
+		    ue: "ue3"
+		});
+    });
+});
+
+app.post('/valider/ue3', keycloak.enforcer(['Validate asset:V3'], {
+    resource_server_id: 'moodle'
+}), (req, res) => {
+    let idnote = req.body.idnote;
+    let validation;
+    if (req.body.validation == "valide") {
+    	validation = true;
+    } else {
+    	validation = false;
+    }
+    
+    if (idnote) {
+    	db.query("UPDATE note SET valide = ? WHERE idnote = ?;", [validation, idnote], (err, result) => {
+    		if (err) return res.status(500).end('Error while updating in database: ' + err);
+    		
+    		res.redirect('/valider/ue3');
+    	});
+    } else {
+    	return res.status(400).end("Wrong parameters");
+    }
 });
 
 const server = app.listen(3000, '127.0.0.1', () => {
