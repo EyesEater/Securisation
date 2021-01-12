@@ -61,6 +61,24 @@ const parseToken = raw => {
     }
 };
 
+keycloak.accessDenied = (req, res) => {
+	const details = parseToken(req.session['keycloak-token']);
+    const embedded_params = {};
+
+    if (details) {
+        embedded_params.name = details.name;
+        embedded_params.email = details.email;
+        embedded_params.username = details.preferred_username;
+    }
+
+	res.render('home',
+		{
+			user: embedded_params,
+			error: "Accès interdit à " + req.originalUrl
+		}
+	);
+}
+
 app.get('/', keycloak.protect(), (req, res, next) => {
     const details = parseToken(req.session['keycloak-token']);
     const embedded_params = {};
@@ -73,6 +91,7 @@ app.get('/', keycloak.protect(), (req, res, next) => {
 
     res.render('home', {
         user: embedded_params,
+        error: ""
     });
 });
 
